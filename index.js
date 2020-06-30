@@ -5,41 +5,79 @@ const port = 3000
 var bodyParser = require('body-parser')
 app.use(bodyParser.json())
 
+const router = express.Router()
+const db = require('./db')
+
 const students = [[0,"BillyBobz"], [1,"TomThumbz"], [2,"DuhmAhze"]]
 const grades = [97, 87, 21]
 
-app.get('/', (req, res) => res.send("Landing page"))
+app.get('/', (req, res) => res.send("see code for links"))
 
-app.get('/students', (req, res) => {
+router.get('/students', (req, res) => {
     let name = req.query.search
     if(name != undefined){
-        function search(student){
-            return student[1].includes(name)
-        }
-        res.send(students.filter(search))
+        db.query(`SELECT * FROM students WHERE name = ` + name, (err, results) => {
+            if(err){
+                res.status(500).end()
+            } else {
+                res.status(200).json(results.rows)
+            }
+        })
     }
     else{
-        res.send(students);
+        db.query(`SELECT * FROM students`, (err, results) => {
+            if(err){
+                res.status(500).end()
+            } else {
+                res.status(200).json(results.rows)
+            }
+        })
     }
 })
 
 
-app.get('/students/:studentId', (req, res) => res.send(students[req.params.studentId]))
+router.get('/students/:studentId', (req, res) => {
+    db.query(`SELECT * FROM students WHERE studentId = ${studentId}`, (err, results) => {
+        if(err){
+            res.status(500).end()
+        } else {
+            res.status(200).json(results.rows)
+        }
+    })
+})
 
-app.get('/grades/:studentId', (req, res) => res.send(grades[req.params.studentId]))
+router.get('/grades/:studentId', (req, res) => {
+    db.query(`SELECT * FROM grades WHERE studentId = ${studentId}`, (err, results) => {
+        if(err){
+            res.status(500).end()
+        } else {
+            res.status(200).json(results.rows)
+        }
+    })
+})
 
-app.post('/grades', (req, res) => { 
+router.post('/grades', (req, res) => { 
     if(req.body.studentId != undefined && req.body.grade != undefined){   
-        grades[req.body.studentId] = req.body.grade 
-        console.log(req.body)    
-        res.send("Recorded grade " + req.body.grade + " for student " + req.body.studentId)
+         
+        db.query('INSERT INTO grades (studentId, grade) VALUES (' + req.body.studentId + ', ' + req.body.grade + ')', (err, results) => {
+            if(err){
+                res.status(500).end()
+            } else {
+                res.status(200).send("Recorded grade " + req.body.grade + " for student " + req.body.studentId)
+            }
+        })
     }
 })
 
-app.post('/register', (req, res) => { 
-    if(req.body.username != undefined && req.body.email != undefined){   
-        console.log(req.body)    
-        res.send("Created User " + req.body.username + " using " + req.body.email)
+router.post('/register', (req, res) => { 
+    if(req.body.username != undefined && req.body.email != undefined){
+        db.query('INSERT INTO user (username, email) VALUES (' + req.body.username + ', ' + req.body.email + ')', (err, results) => {
+            if(err){
+                res.status(500).end()
+            } else {
+                res.status(200).send("Created User " + req.body.username + " using " + req.body.email)
+            }
+        })   
     }
 })
 
